@@ -1,0 +1,1806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rayxer | Advanced Speech Tracker Pro</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom Styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+            scroll-behavior: smooth;
+        }
+        
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .glass-card:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+        
+        .word-item {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            margin: 0.25rem;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .word-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .word-item:hover::before {
+            left: 100%;
+        }
+        
+        .word-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .highlighted-word {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+            animation: highlightPulse 0.5s ease;
+        }
+        
+        .current-word {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            font-weight: 600;
+            animation: pulse 1.5s infinite;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+            position: relative;
+        }
+        
+        .current-word::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #fbbf24;
+            animation: slide 1.5s infinite;
+        }
+        
+        .missed-word {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            font-weight: 600;
+            animation: shake 0.5s;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+        }
+        
+        @keyframes highlightPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes slide {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .progress-bar {
+            transition: width 0.5s ease-in-out;
+            background: linear-gradient(90deg, #10b981, #06b6d4);
+            border-radius: 9999px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.3),
+                transparent
+            );
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .level-badge {
+            transition: all 0.2s;
+            cursor: pointer;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .level-badge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .level-badge:hover::before {
+            left: 100%;
+        }
+        
+        .level-badge:hover {
+            transform: scale(1.05);
+            border-color: rgba(255,255,255,0.3);
+        }
+        
+        .level-badge.active {
+            border-color: currentColor;
+            box-shadow: 0 0 20px currentColor;
+            transform: scale(1.05);
+        }
+        
+        .vocab-card {
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+            position: relative;
+        }
+        
+        .vocab-card:hover {
+            transform: translateX(5px);
+            border-left-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+        
+        .recording-pulse {
+            animation: recordPulse 1.5s infinite;
+        }
+        
+        @keyframes recordPulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .tooltip {
+            position: relative;
+        }
+        
+        .tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-5px);
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            z-index: 50;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(100, 116, 139, 0.8);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.8);
+        }
+        
+        .volume-bar {
+            height: 6px;
+            background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444);
+            border-radius: 3px;
+            transition: width 0.1s ease;
+        }
+        
+        .wave-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 40px;
+            gap: 3px;
+        }
+        
+        .wave-bar {
+            width: 4px;
+            background: linear-gradient(to top, #10b981, #06b6d4);
+            border-radius: 2px;
+            transition: height 0.1s ease;
+        }
+        
+        .help-section {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        /* Ray Link Button Style */
+        .ray-link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 3rem;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .ray-link-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.6s ease;
+        }
+        
+        .ray-link-btn:hover::before {
+            left: 100%;
+        }
+        
+        .ray-link-btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.6);
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+        
+        .ray-link-btn i {
+            font-size: 1.5rem;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        .contact-card {
+            background: rgba(30, 41, 59, 0.5);
+            border-left: 4px solid #667eea;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            position: relative;
+        }
+        
+        .status-indicator.active {
+            background: #10b981;
+            animation: pulse-dot 2s infinite;
+        }
+        
+        .status-indicator.idle {
+            background: #6b7280;
+        }
+        
+        .status-indicator.error {
+            background: #ef4444;
+        }
+        
+        @keyframes pulse-dot {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            50% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+        }
+        
+        .floating-shapes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+            animation: float 20s infinite ease-in-out;
+        }
+        
+        .shape:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            top: -150px;
+            left: -150px;
+            animation-duration: 25s;
+        }
+        
+        .shape:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            bottom: -100px;
+            right: -100px;
+            animation-duration: 20s;
+            animation-delay: 5s;
+        }
+        
+        .shape:nth-child(3) {
+            width: 150px;
+            height: 150px;
+            top: 50%;
+            left: 50%;
+            animation-duration: 30s;
+            animation-delay: 10s;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(50px, 50px) rotate(90deg); }
+            50% { transform: translate(0, 100px) rotate(180deg); }
+            75% { transform: translate(-50px, 50px) rotate(270deg); }
+        }
+        
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            .mobile-padding {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            
+            .mobile-text {
+                font-size: 0.9rem;
+            }
+            
+            .wave-bar {
+                width: 3px;
+            }
+            
+            .word-item {
+                padding: 0.4rem 0.6rem;
+                font-size: 0.9rem;
+            }
+        }
+        
+        /* Loading animation */
+        .loading-dots span {
+            animation: loadingDots 1.4s infinite ease-in-out both;
+        }
+        
+        .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes loadingDots {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="py-8 px-4">
+    <!-- Floating Background Shapes -->
+    <div class="floating-shapes">
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+
+    <div class="max-w-7xl mx-auto relative z-10">
+        <!-- Header -->
+        <header class="text-center mb-12 fade-in">
+            <div class="inline-flex items-center justify-center mb-4">
+                <div class="w-20 h-20 bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 rounded-2xl flex items-center justify-center shadow-2xl animate-pulse-slow">
+                    <i class="fas fa-microphone-alt text-4xl text-white"></i>
+                </div>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent mb-4">
+                English Speech Tracker 
+            </h1>
+            <p class="text-gray-400 text-lg max-w-2xl mx-auto">
+                Advanced speech recognition with phonetic matching, noise cancellation, and comprehensive vocabulary from Basic to Business level.
+            </p>
+            <div class="flex justify-center gap-4 mt-6 flex-wrap">
+                <div class="glass-card px-4 py-2 flex items-center gap-2">
+                    <span class="status-indicator idle" id="systemStatusDot"></span>
+                    <span class="text-sm">System Ready</span>
+                </div>
+                <div class="glass-card px-4 py-2 flex items-center gap-2">
+                    <i class="fas fa-mobile-alt text-blue-400"></i>
+                    <span class="text-sm">Mobile Optimized</span>
+                </div>
+                <div class="glass-card px-4 py-2 flex items-center gap-2">
+                    <i class="fas fa-brain text-purple-400"></i>
+                    <span class="text-sm">AI Powered</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <div class="flex flex-wrap justify-center gap-3 mb-8 fade-in">
+            <button class="nav-tab level-badge active bg-blue-500 text-white px-6 py-3 rounded-xl font-semibold shadow-lg" data-target="home">
+                <i class="fas fa-home mr-2"></i>Home
+            </button>
+            <button class="nav-tab level-badge bg-purple-500 text-white px-6 py-3 rounded-xl font-semibold shadow-lg" data-target="basic">
+                <i class="fas fa-seedling mr-2"></i>Basic
+            </button>
+            <button class="nav-tab level-badge bg-yellow-500 text-white px-6 py-3 rounded-xl font-semibold shadow-lg" data-target="intermediate">
+                <i class="fas fa-fire mr-2"></i>Intermediate
+            </button>
+            <button class="nav-tab level-badge bg-pink-500 text-white px-6 py-3 rounded-xl font-semibold shadow-lg" data-target="advanced">
+                <i class="fas fa-rocket mr-2"></i>Advanced
+            </button>
+            <button class="nav-tab level-badge bg-green-500 text-white px-6 py-3 rounded-xl font-semibold shadow-lg" data-target="business">
+                <i class="fas fa-briefcase mr-2"></i>Business
+            </button>
+        </div>
+
+        <!-- Main Content -->
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column: Speech Tracker -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Speech Tracker Card -->
+                <div class="glass-card p-6 fade-in">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-white flex items-center">
+                            <i class="fas fa-microphone mr-3 text-blue-400"></i>
+                            Speech Tracker Pro
+                        </h2>
+                        <div id="statusIndicator" class="flex items-center gap-3">
+                            <span class="status-indicator idle" id="statusDot"></span>
+                            <span id="statusText" class="text-sm font-medium bg-slate-700 px-3 py-1 rounded-full">IDLE</span>
+                        </div>
+                    </div>
+
+                    <!-- Voice Activity Visualizer -->
+                    <div class="mb-6 bg-slate-800 rounded-xl p-4 border border-slate-700">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm text-gray-400">Voice Activity</span>
+                            <span id="volumeLevel" class="text-sm font-mono text-green-400">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-700 rounded-full h-3 overflow-hidden mb-3">
+                            <div id="volumeBar" class="volume-bar h-full rounded-full" style="width: 0%"></div>
+                        </div>
+                        <div class="wave-container" id="waveContainer">
+                            <!-- Wave bars will be generated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Text Input -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">
+                            <i class="fas fa-keyboard mr-2"></i>Enter Text or Select from Vocabulary
+                        </label>
+                        <textarea 
+                            id="textToSpeak" 
+                            class="w-full h-32 p-4 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-100 resize-none text-lg leading-relaxed transition-all" 
+                            placeholder="Type or paste your English text here..."></textarea>
+                        <div class="mt-2 flex justify-between items-center">
+                            <span class="text-sm text-gray-400">
+                                <i class="fas fa-font mr-1"></i>
+                                Words: <span id="totalWords" class="font-mono">0</span> | 
+                                Characters: <span id="charCount" class="font-mono">0</span>
+                            </span>
+                            <div class="flex gap-2">
+                                <button id="clearText" class="text-sm text-red-400 hover:text-red-300 transition px-3 py-1 rounded-lg bg-slate-700 hover:bg-slate-600">
+                                    <i class="fas fa-trash-alt mr-1"></i>Clear
+                                </button>
+                                <button id="copyText" class="text-sm text-blue-400 hover:text-blue-300 transition px-3 py-1 rounded-lg bg-slate-700 hover:bg-slate-600">
+                                    <i class="fas fa-copy mr-1"></i>Copy
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Vocabulary Loader -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-300 mb-3">Quick Load Examples:</label>
+                        <div class="flex flex-wrap gap-2">
+                            <button class="example-btn bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm transition" data-example="greeting">
+                                <i class="fas fa-hand-wave mr-1"></i>Greeting
+                            </button>
+                            <button class="example-btn bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm transition" data-example="presentation">
+                                <i class="fas fa-user mr-1"></i>Self Intro
+                            </button>
+                            <button class="example-btn bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm transition" data-example="daily">
+                                <i class="fas fa-calendar-day mr-1"></i>Daily Activity
+                            </button>
+                            <button class="example-btn bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm transition" data-example="business">
+                                <i class="fas fa-briefcase mr-1"></i>Business Meeting
+                            </button>
+                            <button class="example-btn bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm transition" data-example="interview">
+                                <i class="fas fa-comments mr-1"></i>Job Interview
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Control Buttons -->
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <button id="startButton" class="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 flex items-center justify-center gap-3 shadow-lg transform hover:scale-[1.02]">
+                            <i class="fas fa-play-circle text-xl"></i>
+                            START SPEECH
+                        </button>
+                        <button id="resetButton" class="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 flex items-center justify-center gap-3">
+                            <i class="fas fa-redo text-xl"></i>
+                            RESET
+                        </button>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="mb-6">
+                        <div class="flex justify-between text-sm text-gray-400 mb-2">
+                            <span>Progress</span>
+                            <span id="progressText">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-700 rounded-full h-3 overflow-hidden">
+                            <div id="progressBar" class="progress-bar h-full rounded-full" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Words Display -->
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-lg font-semibold text-white">Words to Speak</h3>
+                            <span class="text-sm text-gray-400">
+                                <span id="currentIndex">0</span>/<span id="totalWordsDisplay">0</span>
+                            </span>
+                        </div>
+                        <div id="wordsDisplay" class="flex flex-wrap gap-2 p-4 bg-slate-800 border border-slate-700 rounded-xl min-h-[100px] max-h-40 overflow-y-auto">
+                            <p class="text-gray-500 italic w-full text-center">Enter text above and click START to begin.</p>
+                        </div>
+                    </div>
+
+                    <!-- Next Word Highlight -->
+                    <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 mb-6">
+                        <h3 class="text-sm font-medium text-gray-400 mb-2">NEXT WORD TO SPEAK</h3>
+                        <div id="nextWordDisplay" class="text-3xl font-bold text-center text-yellow-400 py-4">
+                            -
+                        </div>
+                    </div>
+
+                    <!-- Live Transcript & Audio Feedback -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <h3 class="text-lg font-semibold text-white mb-3">Live Transcript</h3>
+                            <div id="liveTranscript" class="w-full h-32 p-4 bg-slate-800 border border-slate-700 rounded-xl text-gray-200 overflow-y-auto font-mono text-sm leading-relaxed">
+                                Your spoken words will appear here...
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-white mb-3">Audio Feedback</h3>
+                            <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 h-32 flex flex-col justify-center">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="text-sm text-gray-400">Confidence</span>
+                                    <span id="confidenceLevel" class="text-sm font-mono text-green-400">0%</span>
+                                </div>
+                                <div class="w-full bg-slate-700 rounded-full h-2 mb-3">
+                                    <div id="confidenceBar" class="bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 h-full rounded-full" style="width: 0%"></div>
+                                </div>
+                                <div class="text-xs text-gray-500">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    Green = High confidence | Yellow = Medium | Red = Low
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Statistics Card -->
+                    <div class="glass-card p-6 fade-in">
+                        <h3 class="text-xl font-bold text-white mb-4">
+                            <i class="fas fa-chart-bar mr-2 text-purple-400"></i>
+                            Session Statistics
+                        </h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="bg-slate-800 p-4 rounded-xl text-center border border-slate-700">
+                                <div class="text-2xl font-bold text-green-400" id="correctCount">0</div>
+                                <div class="text-sm text-gray-400">Correct</div>
+                            </div>
+                            <div class="bg-slate-800 p-4 rounded-xl text-center border border-slate-700">
+                                <div class="text-2xl font-bold text-red-400" id="missedCount">0</div>
+                                <div class="text-sm text-gray-400">Missed</div>
+                            </div>
+                            <div class="bg-slate-800 p-4 rounded-xl text-center border border-slate-700">
+                                <div class="text-2xl font-bold text-blue-400" id="accuracyRate">0%</div>
+                                <div class="text-sm text-gray-400">Accuracy</div>
+                            </div>
+                            <div class="bg-slate-800 p-4 rounded-xl text-center border border-slate-700">
+                                <div class="text-2xl font-bold text-yellow-400" id="timeElapsed">0s</div>
+                                <div class="text-sm text-gray-400">Time</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Vocabulary & Help -->
+            <div class="space-y-6">
+                <!-- Vocabulary Panel -->
+                <div class="glass-card p-6 fade-in">
+                    <h3 class="text-xl font-bold text-white mb-4">
+                        <i class="fas fa-book mr-2 text-yellow-400"></i>
+                        Vocabulary Library
+                    </h3>
+                    <div class="mb-4">
+                        <div class="relative">
+                            <input type="text" id="vocabSearch" placeholder="Search vocabulary..." class="w-full p-3 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white">
+                            <i class="fas fa-search absolute right-3 top-3.5 text-gray-400"></i>
+                        </div>
+                    </div>
+                    <div id="vocabList" class="space-y-3 max-h-96 overflow-y-auto pr-2">
+                        <!-- Vocabulary items will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Help & Support Panel -->
+                <div class="help-section fade-in">
+                    <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+                        <i class="fas fa-life-ring mr-2 text-green-400"></i>
+                        Help & Support
+                    </h3>
+                    <div class="text-gray-300 space-y-4">
+                        <div class="flex items-start">
+                            <span class="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs mr-3 mt-0.5 flex-shrink-0">1</span>
+                            <p>Select text from vocabulary or type your own in the text area</p>
+                        </div>
+                        <div class="flex items-start">
+                            <span class="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs mr-3 mt-0.5 flex-shrink-0">2</span>
+                            <p>Click START and allow microphone access when prompted</p>
+                        </div>
+                        <div class="flex items-start">
+                            <span class="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs mr-3 mt-0.5 flex-shrink-0">3</span>
+                            <p>Speak clearly word by word following the highlighted yellow word</p>
+                        </div>
+                        <div class="flex items-start">
+                            <span class="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs mr-3 mt-0.5 flex-shrink-0">4</span>
+                            <p>Words turn green when recognized correctly, red for mispronunciation</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-card mt-6">
+                        <p class="text-sm text-gray-300 mb-3">
+                            <i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>
+                            <strong>Jika ada kendala hubungi saya:</strong>
+                        </p>
+                        <a href="https://rayxerhub.github.io/ry-link/" 
+                           target="_blank" 
+                           class="ray-link-btn">
+                            <i class="fas fa-link"></i>
+                            <span>Connect with Me</span>
+                        </a>
+                        <p class="text-xs text-gray-400 mt-3">
+                            <i class="fas fa-clock mr-1"></i>
+                            Typically responds within 24 hours
+                        </p>
+                    </div>
+
+                    <div class="mt-6 p-4 bg-slate-800 rounded-xl border border-slate-700">
+                        <p class="text-sm text-gray-400">
+                            <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+                            <strong>Tips for best results:</strong><br>
+                            • Use headphones with a microphone<br>
+                            • Speak in a quiet environment<br>
+                            • Pronounce each word clearly<br>
+                            • Use a steady speaking pace<br>
+                            • For mobile: Hold phone close to mouth
+                        </p>
+                    </div>
+                </div>
+
+                <!-- System Status Panel -->
+                <div class="glass-card p-6 fade-in">
+                    <h3 class="text-lg font-bold text-white mb-4">
+                        <i class="fas fa-sliders-h mr-2 text-cyan-400"></i>
+                        Voice Settings
+                    </h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Language</label>
+                            <select id="languageSelect" class="w-full p-2 bg-slate-800 border border-slate-700 rounded-lg text-white">
+                                <option value="en-US">English (US)</option>
+                                <option value="en-GB">English (UK)</option>
+                                <option value="en-AU">English (Australia)</option>
+                                <option value="id-ID">Bahasa Indonesia</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Mobile Sensitivity</label>
+                            <input type="range" id="sensitivity" min="0" max="100" value="70" class="w-full">
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>Low</span>
+                                <span id="sensitivityValue">70%</span>
+                                <span>High</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Confidence Threshold</label>
+                            <input type="range" id="confidenceThreshold" min="0" max="100" value="50" class="w-full">
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>0%</span>
+                                <span id="thresholdValue">50%</span>
+                                <span>100%</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <label class="text-sm text-gray-300">Noise Cancellation</label>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="noiseCancellation" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <label class="text-sm text-gray-300">Phonetic Matching</label>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="phoneticMatching" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="text-center mt-12 text-gray-500 text-sm pb-8">
+            <div class="glass-card p-6 max-w-2xl mx-auto">
+                <p class="mb-2">© 2026 Rayxer Advanced Speech Tracker </p>
+                <p class="text-xs text-gray-400">
+                    Powered by Web Speech API • Phonetic Matching • Noise Cancellation • Real-time Analytics • Mobile Optimized
+                </p>
+                <div class="mt-4 flex justify-center gap-4">
+                    <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-github"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-twitter"></i></a>
+                    <a href="https://rayxerhub.github.io/ry-link/" target="_blank" class="text-gray-400 hover:text-white transition">
+                        <i class="fas fa-external-link-alt"></i>
+                    </a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // ==================== VOCABULARY DATABASE ====================
+        const vocabularyDB = {
+            basic: {
+                title: "Basic Vocabulary",
+                color: "blue",
+                words: [
+                    { word: "hello", definition: "Salam pembuka", example: "Hello, how are you?" },
+                    { word: "goodbye", definition: "Salam penutup", example: "Goodbye, see you tomorrow." },
+                    { word: "thank you", definition: "Terima kasih", example: "Thank you for your help." },
+                    { word: "please", definition: "Silakan/mohon", example: "Please pass me the salt." },
+                    { word: "yes", definition: "Ya", example: "Yes, I understand." },
+                    { word: "no", definition: "Tidak", example: "No, thank you." },
+                    { word: "water", definition: "Air", example: "I need a glass of water." },
+                    { word: "food", definition: "Makanan", example: "The food is delicious." },
+                    { word: "house", definition: "Rumah", example: "This is my house." },
+                    { word: "family", definition: "Keluarga", example: "I love my family." },
+                    { word: "friend", definition: "Teman", example: "She is my best friend." },
+                    { word: "school", definition: "Sekolah", example: "I go to school every day." },
+                    { word: "teacher", definition: "Guru", example: "The teacher is kind." },
+                    { word: "student", definition: "Siswa", example: "He is a good student." },
+                    { word: "book", definition: "Buku", example: "I am reading a book." },
+                    { word: "pen", definition: "Pulpen", example: "Can I borrow your pen?" },
+                    { word: "phone", definition: "Telepon", example: "My phone is new." },
+                    { word: "computer", definition: "Komputer", example: "I use a computer daily." },
+                    { word: "time", definition: "Waktu", example: "What time is it?" },
+                    { word: "day", definition: "Hari", example: "Have a nice day." }
+                ]
+            },
+            intermediate: {
+                title: "Intermediate Vocabulary",
+                color: "yellow",
+                words: [
+                    { word: "discuss", definition: "Membahas", example: "Let's discuss the project." },
+                    { word: "improve", definition: "Meningkatkan", example: "You should improve your skills." },
+                    { word: "develop", definition: "Mengembangkan", example: "We need to develop a strategy." },
+                    { word: "challenge", definition: "Tantangan", example: "This is a big challenge." },
+                    { word: "opportunity", definition: "Peluang", example: "This is a great opportunity." },
+                    { word: "advantage", definition: "Keuntungan", example: "The advantage is clear." },
+                    { word: "disadvantage", definition: "Kerugian", example: "There are some disadvantages." },
+                    { word: "significant", definition: "Signifikan", example: "This is a significant change." },
+                    { word: "efficient", definition: "Efisien", example: "This method is efficient." },
+                    { word: "effective", definition: "Efektif", example: "The plan was effective." },
+                    { word: "potential", definition: "Potensi", example: "She has great potential." },
+                    { word: "achieve", definition: "Mencapai", example: "We can achieve our goals." },
+                    { word: "focus", definition: "Fokus", example: "Please focus on the task." },
+                    { word: "analyze", definition: "Menganalisis", example: "We need to analyze the data." },
+                    { word: "conclude", definition: "Menyimpulkan", example: "I conclude that it works." },
+                    { word: "demonstrate", definition: "Mendemonstrasikan", example: "He will demonstrate the process." },
+                    { word: "recommend", definition: "Menyarankan", example: "I recommend this book." },
+                    { word: "suggest", definition: "Mengusulkan", example: "I suggest we start early." },
+                    { word: "require", definition: "Memenuhi syarat", example: "This requires careful planning." },
+                    { word: "involve", definition: "Melibatkan", example: "The project involves many people." }
+                ]
+            },
+            advanced: {
+                title: "Advanced Vocabulary",
+                color: "purple",
+                words: [
+                    { word: "paradigm", definition: "Paradigma", example: "This creates a new paradigm." },
+                    { word: "synthesize", definition: "Mensintesis", example: "We must synthesize the information." },
+                    { word: "ubiquitous", definition: "Merdapat/menjadi lumrah", example: "Smartphones are ubiquitous." },
+                    { word: "resilient", definition: "Tahan banting", example: "We need a resilient system." },
+                    { word: "nuance", definition: "Nuansa", example: "Understand the nuance of his words." },
+                    { word: "articulate", definition: "Menyampaikan dengan jelas", example: "She can articulate complex ideas." },
+                    { word: "conundrum", definition: "Teka-teki sulit", example: "This is a real conundrum." },
+                    { word: "dichotomy", definition: "Dikotomi", example: "There's a false dichotomy here." },
+                    { word: "ephemeral", definition: "Sementara", example: "Fame can be ephemeral." },
+                    { word: "garrulous", definition: "Suka bicara banyak", example: "He's a garrulous person." },
+                    { word: "iconoclast", definition: "Pemberontak terhadap tradisi", example: "She's an iconoclast in art." },
+                    { word: "laconic", definition: "Seringkat", example: "His reply was laconic." },
+                    { word: "magnanimous", definition: "Murah hati", example: "He was magnanimous in victory." },
+                    { word: "obfuscate", definition: "Membuat menjadi ambigu", example: "Don't obfuscate the issue." },
+                    { word: "perspicacious", definition: "Tajam pengamatan", example: "A perspicacious analysis." },
+                    { word: "quixotic", definition: "Utopian/idealistic", example: "A quixotic quest." },
+                    { word: "sycophant", definition: "Penyembah", example: "He's just a sycophant." },
+                    { word: "taciturn", definition: "Suka diam", example: "He's a taciturn person." },
+                    { word: "vex", definition: "Mengganggu", example: "This detail vexes me." },
+                    { word: "zealot", definition: "Fanatik", example: "A political zealot." }
+                ]
+            },
+            business: {
+                title: "Business Vocabulary",
+                color: "green",
+                words: [
+                    { word: "revenue", definition: "Pendapatan", example: "Company revenue increased." },
+                    { word: "profit", definition: "Keuntungan", example: "Net profit margin improved." },
+                    { word: "budget", definition: "Anggaran", example: "We need to cut the budget." },
+                    { word: "investment", definition: "Investasi", example: "This requires heavy investment." },
+                    { word: "shareholder", definition: "Pemegang saham", example: "Shareholders demand results." },
+                    { word: "stakeholder", definition: "Pemangku kepentingan", example: "All stakeholders were consulted." },
+                    { word: "negotiation", definition: "Negosiasi", example: "The negotiation was successful." },
+                    { word: "contract", definition: "Kontrak", example: "We signed a new contract." },
+                    { word: "strategy", definition: "Strategi", example: "Our strategy is working." },
+                    { word: "marketing", definition: "Pemasaran", example: "Marketing campaign launched." },
+                    { word: "deadline", definition: "Tenggat waktu", example: "The deadline is Friday." },
+                    { word: "quota", definition: "Target/Kuota", example: "Exceed your sales quota." },
+                    { word: "merger", definition: "Penggabungan perusahaan", example: "The merger is complete." },
+                    { word: "acquisition", definition: "Pengambilan perusahaan", example: "Acquisition finalized." },
+                    { word: "logistics", definition: "Logistik", example: "Logistics are challenging." },
+                    { word: "procurement", definition: "Pengadaan", example: "Procurement process started." },
+                    { word: "infrastructure", definition: "Infrastruktur", example: "IT infrastructure upgrade." },
+                    { word: "scalability", definition: "Skalabilitas", example: "Consider scalability issues." },
+                    { word: "synergy", definition: "Sinerji", example: "We expect synergy effects." },
+                    { word: "ROI", definition: "Return on Investment", example: "Calculate the ROI carefully." }
+                ]
+            }
+        };
+
+        // Example sentences for quick load
+        const exampleSentences = {
+            greeting: "Hello! How are you today? I hope you are doing well.",
+            presentation: "My name is John. I work as a software engineer. I have five years of experience.",
+            daily: "I wake up at 7 AM. I eat breakfast and go to work. I finish work at 5 PM.",
+            business: "Let's discuss the quarterly results. The revenue increased by 15% this year. We need to improve our marketing strategy.",
+            interview: "Thank you for this opportunity. I am very excited about this position. I believe my skills match perfectly with your requirements."
+        };
+
+        // ==================== ENHANCED SPEECH RECOGNITION ====================
+        let recognition;
+        let isListening = false;
+        let targetWords = [];
+        let currentWordIndex = 0;
+        let correctCount = 0;
+        let missedCount = 0;
+        let sessionStartTime = null;
+        let timerInterval = null;
+        let audioContext = null;
+        let analyser = null;
+        let microphone = null;
+        let waveAnimationId = null;
+
+        // Check browser support
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        
+        if (!SpeechRecognition) {
+            alert("Your browser doesn't support Speech Recognition. Please use Chrome/Edge on mobile or desktop.");
+            document.getElementById('startButton').disabled = true;
+            document.getElementById('startButton').classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+            recognition.maxAlternatives = 3;
+
+            // Mobile-specific optimizations
+            if (/Mobi|Android/i.test(navigator.userAgent)) {
+                recognition.continuous = true;
+                recognition.interimResults = true;
+            }
+
+            recognition.onstart = () => {
+                isListening = true;
+                updateStatus('LISTENING...', 'bg-green-500', 'recording-pulse');
+                document.getElementById('startButton').innerHTML = '<i class="fas fa-stop-circle text-xl"></i> STOP RECORDING';
+                document.getElementById('startButton').classList.remove('from-green-500', 'to-emerald-600');
+                document.getElementById('startButton').classList.add('from-red-500', 'to-red-600');
+                document.getElementById('statusDot').className = 'status-indicator active';
+            };
+
+            recognition.onend = () => {
+                if (isListening) {
+                    // Auto-restart if still supposed to be listening (important for mobile)
+                    try {
+                        recognition.start();
+                    } catch (e) {
+                        console.log("Restart failed:", e);
+                        stopSession();
+                    }
+                } else {
+                    stopSession();
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error("Speech recognition error", event.error);
+                if (event.error === 'not-allowed') {
+                    updateStatus('MICROPHONE ACCESS DENIED', 'bg-red-500', '');
+                    alert("Please allow microphone access to use this feature.");
+                    stopSession();
+                } else if (event.error === 'no-speech') {
+                    // Ignore no-speech errors, keep listening
+                } else {
+                    updateStatus(`ERROR: ${event.error}`, 'bg-red-500', '');
+                    setTimeout(() => {
+                        if (isListening) recognition.start();
+                    }, 1000);
+                }
+            };
+
+            recognition.onresult = handleSpeechResult;
+            recognition.onnomatch = () => {
+                updateStatus('NO MATCH FOUND', 'bg-red-500', '');
+                setTimeout(() => {
+                    if (isListening) recognition.start();
+                }, 2000);
+            };
+
+            recognition.onaudiostart = () => {
+                updateStatus('DETECTING SPEECH...', 'bg-blue-500', 'pulse-animation');
+            };
+        }
+
+        // ==================== AUDIO VISUALIZATION ====================
+        async function initAudioVisualizer() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true,
+                        // Mobile-specific constraints
+                        ...( /Mobi|Android/i.test(navigator.userAgent) ? {
+                            sampleRate: 44100,
+                            channelCount: 1,
+                            deviceId: 'default'
+                        } : {})
+                    } 
+                });
+                
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 128; // Smaller for mobile performance
+                analyser.smoothingTimeConstant = 0.8;
+                microphone = audioContext.createMediaStreamSource(stream);
+                microphone.connect(analyser);
+                
+                const bufferLength = analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                
+                // Create wave bars
+                const waveContainer = document.getElementById('waveContainer');
+                waveContainer.innerHTML = '';
+                const barCount = 15; // Less bars for mobile
+                for (let i = 0; i < barCount; i++) {
+                    const bar = document.createElement('div');
+                    bar.className = 'wave-bar';
+                    bar.style.height = '4px';
+                    waveContainer.appendChild(bar);
+                }
+                
+                const bars = waveContainer.getElementsByClassName('wave-bar');
+                
+                function visualize() {
+                    if (!isListening) {
+                        // Reset bars when not listening
+                        for (let bar of bars) {
+                            bar.style.height = '4px';
+                        }
+                        return;
+                    }
+                    
+                    analyser.getByteFrequencyData(dataArray);
+                    
+                    // Calculate average volume with mobile sensitivity
+                    const sensitivity = parseInt(document.getElementById('sensitivity').value) / 100;
+                    const average = dataArray.reduce((a, b) => a + b) / bufferLength;
+                    const volumePercent = Math.min(100, Math.round((average / 128) * 100 * sensitivity));
+                    
+                    // Update volume bar
+                    document.getElementById('volumeBar').style.width = `${volumePercent}%`;
+                    document.getElementById('volumeLevel').textContent = `${volumePercent}%`;
+                    
+                    // Update wave bars
+                    for (let i = 0; i < bars.length; i++) {
+                        const dataIndex = Math.floor(i * (bufferLength / bars.length));
+                        const value = dataArray[dataIndex];
+                        const height = Math.max(4, (value / 255) * 40);
+                        bars[i].style.height = `${height}px`;
+                    }
+                    
+                    // Update confidence bar based on recognition confidence
+                    updateConfidenceBar(volumePercent);
+                    
+                    waveAnimationId = requestAnimationFrame(visualize);
+                }
+                
+                visualize();
+                
+            } catch (error) {
+                console.error('Audio visualization error:', error);
+                // Fallback: just show listening without visualization
+                updateStatus('LISTENING (NO VISUALIZER)', 'bg-yellow-500', '');
+            }
+        }
+
+        function updateConfidenceBar(volume) {
+            // Simple mapping: volume to confidence (in reality, this would use recognition confidence)
+            const confidence = Math.min(100, volume * 1.2);
+            document.getElementById('confidenceBar').style.width = `${confidence}%`;
+            document.getElementById('confidenceLevel').textContent = `${Math.round(confidence)}%`;
+            
+            // Update color based on confidence
+            const bar = document.getElementById('confidenceBar');
+            if (confidence > 70) {
+                bar.style.background = 'linear-gradient(90deg, #10b981, #06b6d4)';
+            } else if (confidence > 40) {
+                bar.style.background = 'linear-gradient(90deg, #f59e0b, #eab308)';
+            } else {
+                bar.style.background = 'linear-gradient(90deg, #ef4444, #dc2626)';
+            }
+        }
+
+        // ==================== PHONETIC MATCHING ====================
+        function soundex(word) {
+            if (!word) return '';
+            
+            const map = {
+                B:1, F:1, P:1, V:1,
+                C:2, G:2, J:2, K:2, Q:2, S:2, X:2, Z:2,
+                D:3, T:3,
+                L:4,
+                M:5, N:5,
+                R:6
+            };
+
+            let code = word.toUpperCase().split('');
+            let soundex = code[0];
+            let previous = map[code[0]];
+
+            for (let i = 1; i < code.length && soundex.length < 4; i++) {
+                let current = map[code[i]];
+                if (current && current !== previous) {
+                    soundex += current;
+                }
+                previous = current;
+            }
+
+            return (soundex + '000').slice(0, 4);
+        }
+
+        // ==================== ENHANCED WORD PROCESSING ====================
+        function handleSpeechResult(event) {
+            let finalTranscript = '';
+            let interimTranscript = '';
+
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    // Get confidence from the speech recognition
+                    const confidence = event.results[i][0].confidence;
+                    const threshold = parseInt(document.getElementById('confidenceThreshold').value) / 100;
+                    
+                    // Mobile: lower threshold for better detection
+                    const mobileThreshold = /Mobi|Android/i.test(navigator.userAgent) ? threshold * 0.8 : threshold;
+                    
+                    if (confidence > mobileThreshold) {
+                        finalTranscript += event.results[i][0].transcript;
+                    } else {
+                        console.log(`Low confidence (${(confidence*100).toFixed(1)}%), skipping`);
+                    }
+                } else {
+                    interimTranscript += event.results[i][0].transcript;
+                }
+            }
+
+            // Update live transcript
+            const liveTranscript = document.getElementById('liveTranscript');
+            liveTranscript.innerHTML = finalTranscript + 
+                '<span class="text-gray-500 italic">' + interimTranscript + '</span>';
+            liveTranscript.scrollTop = liveTranscript.scrollHeight;
+
+            // Process final transcript
+            if (finalTranscript) {
+                processFinalTranscript(finalTranscript);
+            }
+        }
+
+        function processFinalTranscript(transcript) {
+            const spokenWords = transcript.toLowerCase()
+                .replace(/[^\w\s']/g, '')
+                .split(/\s+/)
+                .filter(w => w.length > 0);
+
+            for (const spokenWord of spokenWords) {
+                if (currentWordIndex >= totalWords) break;
+
+                const targetWord = targetWords[currentWordIndex];
+                const wordElement = document.getElementById(`word-${currentWordIndex}`);
+                
+                // Get settings
+                const usePhonetic = document.getElementById('phoneticMatching').checked;
+                const minSimilarity = 0.75;
+                
+                // Advanced matching strategies
+                let isMatch = false;
+                let matchType = '';
+                
+                // 1. Exact match
+                if (spokenWord === targetWord) {
+                    isMatch = true;
+                    matchType = 'exact';
+                }
+                // 2. Phonetic matching (Soundex) - better for mobile pronunciation variations
+                else if (usePhonetic && soundex(spokenWord) === soundex(targetWord)) {
+                    isMatch = true;
+                    matchType = 'phonetic';
+                }
+                // 3. Levenshtein similarity
+                else if (calculateSimilarity(spokenWord, targetWord) > minSimilarity) {
+                    isMatch = true;
+                    matchType = 'similar';
+                }
+                // 4. Contains match (for compound words)
+                else if (spokenWord.includes(targetWord) || targetWord.includes(spokenWord)) {
+                    isMatch = true;
+                    matchType = 'contains';
+                }
+
+                if (isMatch) {
+                    wordElement.classList.remove('current-word');
+                    wordElement.classList.add('highlighted-word');
+                    correctCount++;
+                    currentWordIndex++;
+                    updateProgress();
+                    updateNextWord();
+                    updateStats();
+                    
+                    // Visual feedback for match type
+                    if (matchType !== 'exact') {
+                        setTimeout(() => {
+                            wordElement.style.animation = 'none';
+                            setTimeout(() => {
+                                wordElement.style.animation = '';
+                            }, 10);
+                        }, 100);
+                    }
+                } else {
+                    // Handle mispronounced words
+                    handleMispronunciation(spokenWord, targetWord);
+                }
+            }
+        }
+
+        function handleMispronunciation(spoken, target) {
+            const wordElement = document.getElementById(`word-${currentWordIndex}`);
+            wordElement.classList.remove('current-word');
+            wordElement.classList.add('missed-word');
+            missedCount++;
+            updateStats();
+            
+            // Show what was heard vs what was expected in console for debugging
+            console.log(`Mispronunciation: heard "${spoken}", expected "${target}"`);
+            
+            // Move to next word after showing error (shorter delay for mobile)
+            setTimeout(() => {
+                currentWordIndex++;
+                updateProgress();
+                updateNextWord();
+            }, 500);
+        }
+
+        // ==================== CORE FUNCTIONS ====================
+        function updateStatus(text, colorClass, extraClass) {
+            const statusText = document.getElementById('statusText');
+            const statusDot = document.getElementById('statusDot');
+            
+            statusText.textContent = text;
+            
+            // Remove all status classes
+            statusDot.classList.remove('active', 'idle', 'error', 'recording-pulse');
+            statusText.classList.remove('bg-green-500', 'bg-red-500', 'bg-yellow-500', 'bg-blue-500');
+            
+            // Add new status classes
+            if (colorClass.includes('green')) {
+                statusDot.classList.add('active');
+                statusText.classList.add('bg-green-500');
+            } else if (colorClass.includes('red')) {
+                statusDot.classList.add('error');
+                statusText.classList.add('bg-red-500');
+            } else if (colorClass.includes('yellow')) {
+                statusDot.classList.add('idle');
+                statusText.classList.add('bg-yellow-500');
+            } else if (colorClass.includes('blue')) {
+                statusDot.classList.add('idle');
+                statusText.classList.add('bg-blue-500');
+            }
+            
+            if (extraClass) {
+                statusDot.classList.add(extraClass);
+            }
+        }
+
+        function startSession() {
+            const text = document.getElementById('textToSpeak').value.trim();
+            if (!text) {
+                alert("Please enter some text to practice!");
+                return;
+            }
+
+            // Reset session
+            resetSession();
+            sessionStartTime = Date.now();
+            startTimer();
+
+            // Process text into words
+            targetWords = text.toLowerCase()
+                .replace(/[^\w\s']/g, '') // Remove punctuation except apostrophes
+                .split(/\s+/)
+                .filter(word => word.length > 0);
+
+            currentWordIndex = 0;
+            correctCount = 0;
+            missedCount = 0;
+            totalWords = targetWords.length;
+
+            // Display words
+            displayWords();
+            updateStats();
+            updateNextWord();
+
+            try {
+                recognition.start();
+                // Initialize audio visualizer
+                initAudioVisualizer();
+            } catch (e) {
+                console.error("Failed to start recognition:", e);
+            }
+        }
+
+        function stopSession() {
+            isListening = false;
+            recognition.stop();
+            clearInterval(timerInterval);
+            if (waveAnimationId) {
+                cancelAnimationFrame(waveAnimationId);
+            }
+            if (audioContext) {
+                audioContext.close();
+            }
+            updateStatus('COMPLETED', 'bg-green-500', '');
+            document.getElementById('startButton').innerHTML = '<i class="fas fa-play-circle text-xl"></i> START SPEECH';
+            document.getElementById('startButton').classList.remove('from-red-500', 'to-red-600');
+            document.getElementById('startButton').classList.add('from-green-500', 'to-emerald-600');
+            document.getElementById('statusDot').className = 'status-indicator idle';
+            
+            if (currentWordIndex >= totalWords) {
+                updateStatus('ALL WORDS COMPLETED!', 'bg-green-500', '');
+            }
+        }
+
+        function resetSession() {
+            stopSession();
+            document.getElementById('textToSpeak').value = '';
+            document.getElementById('wordsDisplay').innerHTML = '<p class="text-gray-500 italic w-full text-center">Enter text and click START to begin.</p>';
+            document.getElementById('liveTranscript').innerHTML = 'Your spoken words will appear here...';
+            document.getElementById('nextWordDisplay').textContent = '-';
+            document.getElementById('progressBar').style.width = '0%';
+            document.getElementById('progressText').textContent = '0%';
+            document.getElementById('currentIndex').textContent = '0';
+            document.getElementById('totalWordsDisplay').textContent = '0';
+            document.getElementById('totalWords').textContent = '0';
+            document.getElementById('charCount').textContent = '0';
+            document.getElementById('volumeBar').style.width = '0%';
+            document.getElementById('volumeLevel').textContent = '0%';
+            document.getElementById('confidenceBar').style.width = '0%';
+            document.getElementById('confidenceLevel').textContent = '0%';
+            updateStats();
+        }
+
+        function displayWords() {
+            const container = document.getElementById('wordsDisplay');
+            container.innerHTML = '';
+            
+            targetWords.forEach((word, index) => {
+                const span = document.createElement('span');
+                span.className = 'word-item bg-slate-700 text-gray-300';
+                span.textContent = word;
+                span.id = `word-${index}`;
+                span.onclick = () => pronounceWord(word);
+                span.title = `Click to hear pronunciation`;
+                container.appendChild(span);
+            });
+
+            document.getElementById('totalWordsDisplay').textContent = totalWords;
+            document.getElementById('totalWords').textContent = totalWords;
+            document.getElementById('charCount').textContent = document.getElementById('textToSpeak').value.length;
+        }
+
+        function updateNextWord() {
+            const nextWordDisplay = document.getElementById('nextWordDisplay');
+            if (currentWordIndex < totalWords) {
+                nextWordDisplay.textContent = targetWords[currentWordIndex];
+                // Highlight current word in display
+                document.querySelectorAll('.word-item').forEach((el, idx) => {
+                    el.classList.remove('current-word', 'highlighted-word', 'missed-word');
+                    if (idx === currentWordIndex) {
+                        el.classList.add('current-word');
+                    }
+                });
+            } else {
+                nextWordDisplay.textContent = '✅ COMPLETED!';
+                document.querySelectorAll('.word-item').forEach(el => {
+                    el.classList.remove('current-word', 'missed-word');
+                });
+            }
+        }
+
+        function updateProgress() {
+            const progress = totalWords > 0 ? (currentWordIndex / totalWords) * 100 : 0;
+            document.getElementById('progressBar').style.width = `${progress}%`;
+            document.getElementById('progressText').textContent = `${Math.round(progress)}%`;
+            document.getElementById('currentIndex').textContent = currentWordIndex;
+        }
+
+        function updateStats() {
+            document.getElementById('correctCount').textContent = correctCount;
+            document.getElementById('missedCount').textContent = missedCount;
+            const total = correctCount + missedCount;
+            const accuracy = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+            document.getElementById('accuracyRate').textContent = `${accuracy}%`;
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                if (sessionStartTime) {
+                    const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+                    const minutes = Math.floor(elapsed / 60);
+                    const seconds = elapsed % 60;
+                    document.getElementById('timeElapsed').textContent = 
+                        minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+                }
+            }, 1000);
+        }
+
+        // ==================== VOCABULARY PANEL FUNCTIONS ====================
+        function populateVocabularyList(level = null) {
+            const vocabList = document.getElementById('vocabList');
+            vocabList.innerHTML = '';
+            
+            const levels = level ? [level] : ['basic', 'intermediate', 'advanced', 'business'];
+            
+            levels.forEach(lvl => {
+                const data = vocabularyDB[lvl];
+                if (!data) return;
+                
+                const section = document.createElement('div');
+                section.className = 'mb-6 fade-in';
+                section.innerHTML = `
+                    <h4 class="font-bold text-${data.color}-400 mb-3 flex items-center">
+                        <span class="w-2 h-2 bg-${data.color}-500 rounded-full mr-2"></span>
+                        ${data.title}
+                    </h4>
+                    <div class="space-y-2">
+                        ${data.words.slice(0, 5).map(word => `
+                            <div class="vocab-card bg-slate-800 p-3 rounded-lg cursor-pointer hover:bg-slate-700"
+                                 onclick="loadWordFromVocab('${word.word}')">
+                                <div class="font-semibold text-white flex justify-between">
+                                    <span>${word.word}</span>
+                                    <button class="text-blue-400 hover:text-blue-300 tooltip text-xs" 
+                                            data-tooltip="Pronounce"
+                                            onclick="event.stopPropagation(); pronounceWord('${word.word}')">
+                                        <i class="fas fa-volume-up"></i>
+                                    </button>
+                                </div>
+                                <div class="text-xs text-gray-400 mt-1">${word.definition}</div>
+                            </div>
+                        `).join('')}
+                        ${data.words.length > 5 ? `
+                            <button class="text-xs text-blue-400 hover:text-blue-300 mt-2 w-full text-left"
+                                    onclick="showAllWords('${lvl}')">
+                                Show all ${data.words.length} words →
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+                vocabList.appendChild(section);
+            });
+        }
+
+        function showAllWords(level) {
+            const data = vocabularyDB[level];
+            const vocabList = document.getElementById('vocabList');
+            vocabList.innerHTML = '';
+            
+            const section = document.createElement('div');
+            section.className = 'mb-6 fade-in';
+            section.innerHTML = `
+                <div class="flex justify-between items-center mb-3">
+                    <h4 class="font-bold text-${data.color}-400 flex items-center">
+                        <span class="w-2 h-2 bg-${data.color}-500 rounded-full mr-2"></span>
+                        ${data.title} (All ${data.words.length} words)
+                    </h4>
+                    <button class="text-xs text-gray-400 hover:text-white" onclick="populateVocabularyList()">
+                        ← Back
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 gap-2 max-h-96 overflow-y-auto pr-2">
+                    ${data.words.map(word => `
+                        <div class="vocab-card bg-slate-800 p-3 rounded-lg cursor-pointer hover:bg-slate-700"
+                             onclick="loadWordFromVocab('${word.word}')">
+                            <div class="font-semibold text-white flex justify-between">
+                                <span>${word.word}</span>
+                                <button class="text-blue-400 hover:text-blue-300 tooltip text-xs" 
+                                        data-tooltip="Pronounce"
+                                        onclick="event.stopPropagation(); pronounceWord('${word.word}')">
+                                    <i class="fas fa-volume-up"></i>
+                                </button>
+                            </div>
+                            <div class="text-sm text-gray-400 mt-1">${word.definition}</div>
+                            <div class="text-xs text-gray-500 mt-1 italic">"${word.example}"</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            vocabList.appendChild(section);
+        }
+
+        function loadWordFromVocab(word) {
+            const currentText = document.getElementById('textToSpeak').value;
+            const newText = currentText ? currentText + ' ' + word : word;
+            document.getElementById('textToSpeak').value = newText;
+            document.getElementById('textToSpeak').focus();
+            // Update character count
+            document.getElementById('charCount').textContent = newText.length;
+        }
+
+        function loadExampleSentence(type) {
+            const textarea = document.getElementById('textToSpeak');
+            if (exampleSentences[type]) {
+                textarea.value = exampleSentences[type];
+                // Update word count display
+                const words = textarea.value.toLowerCase().replace(/[^\w\s']/g, '').split(/\s+/).filter(w => w);
+                document.getElementById('totalWords').textContent = words.length;
+                document.getElementById('charCount').textContent = textarea.value.length;
+            }
+        }
+
+        function searchVocabulary(query) {
+            query = query.toLowerCase();
+            const results = [];
+            
+            Object.keys(vocabularyDB).forEach(level => {
+                vocabularyDB[level].words.forEach(word => {
+                    if (word.word.toLowerCase().includes(query) || 
+                        word.definition.toLowerCase().includes(query)) {
+                        results.push({ ...word, level, levelTitle: vocabularyDB[level].title });
+                    }
+                });
+            });
+            
+            displaySearchResults(results);
+        }
+
+        function displaySearchResults(results) {
+            const vocabList = document.getElementById('vocabList');
+            vocabList.innerHTML = '';
+            
+            if (results.length === 0) {
+                vocabList.innerHTML = '<div class="text-gray-500 text-center py-8">No vocabulary found</div>';
+                return;
+            }
+            
+            const section = document.createElement('div');
+            section.className = 'mb-6 fade-in';
+            section.innerHTML = `
+                <div class="mb-4">
+                    <span class="text-sm text-gray-400">Found ${results.length} words</span>
+                </div>
+                <div class="space-y-2 max-h-96 overflow-y-auto pr-2">
+                    ${results.map(word => `
+                        <div class="vocab-card bg-slate-800 p-3 rounded-lg cursor-pointer hover:bg-slate-700"
+                             onclick="loadWordFromVocab('${word.word}')">
+                            <div class="font-semibold text-white flex justify-between">
+                                <span>${word.word}</span>
+                                <span class="text-xs bg-slate-700 px-2 py-1 rounded">${word.levelTitle}</span>
+                            </div>
+                            <div class="text-sm text-gray-400 mt-1">${word.definition}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            vocabList.appendChild(section);
+        }
+
+        // ==================== TEXT-TO-SPEECH ====================
+        function pronounceWord(word) {
+            if ('speechSynthesis' in window) {
+                // Cancel any ongoing speech
+                speechSynthesis.cancel();
+                
+                const utterance = new SpeechSynthesisUtterance(word);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.8;
+                utterance.pitch = 1;
+                utterance.volume = 1;
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        // ==================== EVENT LISTENERS ====================
+        document.getElementById('startButton').addEventListener('click', () => {
+            if (isListening) {
+                stopSession();
+            } else {
+                startSession();
+            }
+        });
+
+        document.getElementById('resetButton').addEventListener('click', resetSession);
+        
+        document.getElementById('clearText').addEventListener('click', () => {
+            document.getElementById('textToSpeak').value = '';
+            const words = document.getElementById('wordsDisplay');
+            words.innerHTML = '<p class="text-gray-500 italic w-full text-center">Enter text and click START to begin.</p>';
+            document.getElementById('totalWords').textContent = '0';
+            document.getElementById('charCount').textContent = '0';
+        });
+
+        document.getElementById('copyText').addEventListener('click', () => {
+            const text = document.getElementById('textToSpeak').value;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById('copyText');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check mr-1"></i>Copied!';
+                btn.classList.add('text-green-400');
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.remove('text-green-400');
+                }, 2000);
+            });
+        });
+
+        // Text input change listener
+        document.getElementById('textToSpeak').addEventListener('input', function() {
+            const words = this.value.toLowerCase().replace(/[^\w\s']/g, '').split(/\s+/).filter(w => w);
+            document.getElementById('totalWords').textContent = words.length;
+            document.getElementById('charCount').textContent = this.value.length;
+        });
+
+        // Navigation tabs
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Remove active class from all tabs
+                document.querySelectorAll('.nav-tab').forEach(t => {
+                    t.classList.remove('active', 'ring-2', 'ring-white');
+                });
+                // Add active class to clicked tab
+                this.classList.add('active', 'ring-2', 'ring-white');
+                
+                // Here you could switch content sections if needed
+                const target = this.getAttribute('data-target');
+                console.log(`Switched to ${target} section`);
+            });
+        });
+
+        // Example buttons
+        document.querySelectorAll('.example-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const exampleType = this.getAttribute('data-example');
+                loadExampleSentence(exampleType);
+            });
+        });
+
+        // Vocabulary search
+        document.getElementById('vocabSearch').addEventListener('input', function() {
+            if (this.value.trim().length > 0) {
+                searchVocabulary(this.value);
+            } else {
+                populateVocabularyList();
+            }
+        });
+
+        // Settings listeners
+        document.getElementById('languageSelect').addEventListener('change', function() {
+            if (recognition) {
+                recognition.lang = this.value;
+                updateStatus(`LANGUAGE: ${this.value.toUpperCase()}`, 'bg-purple-500', '');
+            }
+        });
+
+        document.getElementById('sensitivity').addEventListener('input', function() {
+            document.getElementById('sensitivityValue').textContent = `${this.value}%`;
+        });
+
+        document.getElementById('confidenceThreshold').addEventListener('input', function() {
+            document.getElementById('thresholdValue').textContent = `${this.value}%`;
+        });
+
+        document.getElementById('noiseCancellation').addEventListener('change', function() {
+            if (this.checked) {
+                console.log('Noise cancellation enabled');
+                // In a real implementation, this would enable noise cancellation
+            }
+        });
+
+        // Initialize wave bars
+        function initWaveBars() {
+            const waveContainer = document.getElementById('waveContainer');
+            waveContainer.innerHTML = '';
+            const barCount = 15; // Less bars for mobile
+            for (let i = 0; i < barCount; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'wave-bar';
+                bar.style.height = '4px';
+                waveContainer.appendChild(bar);
+            }
+        }
+
+        // Prevent memory leaks
+        window.addEventListener('beforeunload', () => {
+            if (recognition) recognition.stop();
+            if (speechSynthesis) speechSynthesis.cancel();
+            if (audioContext) audioContext.close();
+            if (waveAnimationId) cancelAnimationFrame(waveAnimationId);
+        });
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            populateVocabularyList();
+            loadExampleSentence('greeting');
+            initWaveBars();
+            
+            // Show mobile optimization notice if on mobile
+            if (/Mobi|Android/i.test(navigator.userAgent)) {
+                console.log('Mobile device detected - optimizations enabled');
+            }
+            
+            // Add smooth scroll behavior
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            });
+        });
+
+        // Levenshtein distance calculation
+        function calculateSimilarity(str1, str2) {
+            const longer = str1.length > str2.length ? str1 : str2;
+            const shorter = str1.length > str2.length ? str2 : str1;
+            
+            if (longer.length === 0) return 1.0;
+            
+            const editDistance = levenshteinDistance(longer, shorter);
+            return (longer.length - editDistance) / longer.length;
+        }
+
+        function levenshteinDistance(str1, str2) {
+            const matrix = [];
+            for (let i = 0; i <= str2.length; i++) {
+                matrix[i] = [i];
+            }
+            for (let j = 0; j <= str1.length; j++) {
+                matrix[0][j] = j;
+            }
+            for (let i = 1; i <= str2.length; i++) {
+                for (let j = 1; j <= str1.length; j++) {
+                    if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j - 1] + 1,
+                            matrix[i][j - 1] + 1,
+                            matrix[i - 1][j] + 1
+                        );
+                    }
+                }
+            }
+            return matrix[str2.length][str1.length];
+        }
+    </script>
+</body>
+</html>
